@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/images">
+        <file alias="Pause">images/Button-Pause-icon.png</file>
+        <file alias="Play">images/Button-Play-icon.png</file>
+        <file alias="Stop">images/Button-Stop-icon.png</file>
+        <file alias="Prev">images/Skip-backward-icon.png</file>
+        <file alias="Next">images/Skip-forward-icon.png</file>
+    </qresource>
+</RCC>
