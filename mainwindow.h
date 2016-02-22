@@ -23,10 +23,12 @@ public:
 private:
     Ui::MainWindow *ui;
     QPoint dragPos;
+    QList<QString> list;
     QMediaPlayer *player;
     QMediaPlaylist *playlist;
 
     void setContextMenu();
+    void setListMenu(QTableWidget* list);
 
     QAction *actionExit;
     QAction *actionAddSong;
@@ -35,6 +37,7 @@ private:
     QAction *actionPrev;
     QAction *actionNext;
     QAction *actionStop;
+    QAction *actionHideorShowList;
 
     QAction *actionSeperate_1;
     QAction *actionSeperate_2;
@@ -56,6 +59,7 @@ private slots:
     void slotPositionChange(qint64 position);
     void slotDurationChange(qint64 position);
     void slotSetPosition(int position);
+    void slotHideorShowList();
 
 };
 

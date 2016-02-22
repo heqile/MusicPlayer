@@ -14,8 +14,25 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tableWidget->insertColumn(1);
     ui->tableWidget->insertColumn(2);
     ui->tableWidget->hideColumn(2);
+    ui->tableWidget->hideColumn(1);
 
+    ui->tableWidget->setColumnWidth(0,175);
+    ui->tableWidget->setColumnWidth(1,50);
+    ui->tableWidget->horizontalHeader()->setMaximumSectionSize(175);
+    ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    ui->tableWidget->setHorizontalHeaderLabels(QStringList()<<"name"<<"form");
+    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tableWidget->setContextMenuPolicy(Qt::ActionsContextMenu);
+
+   //ui->tableWidget->setAcceptDrops(true);
+   // setAcceptDrops(true);
+    //ui->tableWidget->
     ui->toolButton_Play->setText("Play");
+    ui->toolButton_Play->setAutoRaise(true);
+    ui->toolButton_Next->setAutoRaise(true);
+    ui->toolButton_Prev->setAutoRaise(true);
+    ui->toolButton_Stop->setAutoRaise(true);
 
     actionExit = new QAction(this);
     actionExit->setText(tr("&Exit"));
@@ -24,13 +41,15 @@ MainWindow::MainWindow(QWidget *parent) :
     actionPlay = new QAction(this);
     actionPlay->setText(tr("&Play"));
     actionPause = new QAction(this);
-    actionPause->setText(tr("&Pause"));
+    actionPause->setText("&Pause");
     actionPrev = new QAction(this);
-    actionPrev->setText(tr("&Previous"));
+    actionPrev->setText("&Previous");
     actionNext = new QAction(this);
-    actionNext->setText(tr("&Next"));
+    actionNext->setText("&Next");
     actionStop = new QAction(this);
-    actionStop->setText(tr("&Stop"));
+    actionStop->setText("&Stop");
+    actionHideorShowList = new QAction(this);
+    actionHideorShowList->setText("&Hide_List");
 
     setContextMenu();
 
@@ -39,6 +58,8 @@ MainWindow::MainWindow(QWidget *parent) :
     playlist->setPlaybackMode(QMediaPlaylist::Loop);
 
     player->setPlaylist(playlist);
+ //   setListMenu(ui->tableWidget);
+
 
     connect(actionExit,SIGNAL(triggered(bool)),this,SLOT(slotExit()));
     connect(actionAddSong,SIGNAL(triggered(bool)),this,SLOT(slotAddSong()));
@@ -47,6 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(actionPrev,SIGNAL(triggered(bool)),this,SLOT(slotPrev()));
     connect(actionNext,SIGNAL(triggered(bool)),this,SLOT(slotNext()));
     connect(actionStop,SIGNAL(triggered(bool)),this,SLOT(slotStop()));
+    connect(actionHideorShowList,SIGNAL(triggered(bool)),this,SLOT(slotHideorShowList()));
 
     connect(ui->toolButton_Play,SIGNAL(clicked(bool)),this,SLOT(slotPlayorPause()));
     connect(ui->toolButton_Stop,SIGNAL(clicked(bool)),this,SLOT(slotStop()));
@@ -57,9 +79,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(player,SIGNAL(durationChanged(qint64)),this,SLOT(slotDurationChange(qint64)));
     connect(ui->sliderProgress,SIGNAL(sliderMoved(int)),this,SLOT(slotSetPosition(int)));
 
-
 //    connect(ui->toolButton_Play,SIGNAL(clicked(bool)),this,SLOT()
-
 
 }
 
@@ -78,6 +98,7 @@ void MainWindow::setContextMenu()
     actionSeperate_3->setSeparator(true);
 
     this->addAction(actionAddSong);
+    this->addAction(actionHideorShowList);
     this->addAction(actionSeperate_1);
     this->addAction(actionPlay);
     this->addAction(actionPause);
@@ -88,6 +109,11 @@ void MainWindow::setContextMenu()
     this->addAction(actionSeperate_3);
     this->addAction(actionExit);
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
+}
+
+void MainWindow::setListMenu(QTableWidget* list)
+{
+    list->addAction(actionPlay);
 }
 
 void MainWindow::slotExit()
@@ -107,6 +133,11 @@ void MainWindow::slotPlay()
 {
     ui->toolButton_Play->setText("Pause");
     ui->toolButton_Play->setIcon(QIcon(":/images/Pause"));
+    if(!(playlist->currentIndex() == ui->tableWidget->currentRow()))
+    {
+        playlist->setCurrentIndex(ui->tableWidget->currentRow());
+        player->setMedia(playlist->currentMedia());
+    }
     player->play();
 }
 
@@ -137,16 +168,25 @@ void MainWindow::slotStop()
 
 void MainWindow::slotAddSong()
 {
-    QString filepath = QFileDialog::getOpenFileName(this,"open a file","/home/lele/MusicPlayer","music_file(*.mp3)");
-    if(!filepath.isEmpty())
+    QStringList filepaths = QFileDialog::getOpenFileNames(this,"open a file","/home/lele/MusicPlayer","music_file(*.mp3)");
+    QString filepath;
+    foreach(filepath, filepaths)
     {
-        playlist->addMedia(QUrl::fromLocalFile(filepath));
-        QString filename = filepath.split("/").last();
-        int rownumber = ui->tableWidget->rowCount();
-        ui->tableWidget->insertRow(rownumber);
-        ui->tableWidget->setItem(rownumber,0,new QTableWidgetItem(filename.split(".").front()));
-        ui->tableWidget->setItem(rownumber,1,new QTableWidgetItem(filename.split(".").last()));
-        ui->tableWidget->setItem(rownumber,2,new QTableWidgetItem(filepath));
+        if(!filepath.isEmpty())
+        {
+            if(!list.contains(filepath))
+            {
+                list.append(filepath);
+                playlist->addMedia(QUrl::fromLocalFile(filepath));
+                QString filename = filepath.split("/").last();
+                int rownumber = ui->tableWidget->rowCount();
+                ui->tableWidget->insertRow(rownumber);
+                ui->tableWidget->setItem(rownumber,0,new QTableWidgetItem(filename));
+//                ui->tableWidget->setItem(rownumber,1,new QTableWidgetItem(filename.split(".").last()));
+                ui->tableWidget->setItem(rownumber,2,new QTableWidgetItem(filepath));
+            }
+        }
+
     }
 }
 
@@ -165,6 +205,22 @@ void MainWindow::slotSetPosition(int position)
     player->setPosition(position);
 }
 
+void MainWindow::slotHideorShowList()
+{
+    if(ui->tableWidget->isVisible())
+    {
+        ui->tableWidget->setVisible(false);
+        ui->tableWidget->setDisabled(true);
+        actionHideorShowList->setText("&Show_List");
+    }
+    else
+    {
+        ui->tableWidget->setVisible(true);
+        ui->tableWidget->setDisabled(false);
+        actionHideorShowList->setText("&Hide_List");
+    }
+}
+
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
     if(event->button()==Qt::LeftButton)
@@ -174,7 +230,6 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     }
 }
 
-
 void MainWindow::mouseMoveEvent(QMouseEvent *event)
 {
     if(event->buttons() == Qt::LeftButton)
@@ -183,3 +238,4 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event)
         //event->accept();
     }
 }
+
